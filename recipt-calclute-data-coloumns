@@ -1,0 +1,110 @@
+ import 'package:flutter/material.dart';
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text('Auto-Calculate Total Example'),
+        ),
+        body: EditableTable(),
+      ),
+    );
+  }
+}
+
+class EditableTable extends StatefulWidget {
+  @override
+  _EditableTableState createState() => _EditableTableState();
+}
+
+class _EditableTableState extends State<EditableTable> {
+  List<DataRow> rows = [];
+  List<double> totals = [];
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: DataTable(
+        columns: [
+          DataColumn(label: Text('Line')),
+          DataColumn(label: Text('Quantity')),
+          DataColumn(label: Text('Amount')),
+          DataColumn(label: Text('Total')),
+        ],
+        rows: rows,
+      ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    for (int i = 0; i < 3; i++) {
+      TextEditingController quantityController = TextEditingController();
+      TextEditingController amountController = TextEditingController();
+
+      quantityController.addListener(() {
+        _updateTotal(i, quantityController, amountController);
+      });
+
+      amountController.addListener(() {
+        _updateTotal(i, quantityController, amountController);
+      });
+
+      rows.add(DataRow(cells: [
+        DataCell(Text((i + 1).toString())),
+        DataCell(TextField(
+          controller: quantityController,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(labelText: 'Quantity'),
+        )),
+        DataCell(TextField(
+          controller: amountController,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(labelText: 'Amount'),
+        )),
+        DataCell(Text('0.00')),
+      ]));
+
+      totals.add(0.0);
+    }
+  }
+
+  void _updateTotal(int index, TextEditingController quantityController, TextEditingController amountController) {
+    double quantity = double.tryParse(quantityController.text) ?? 0.0;
+    double amount = double.tryParse(amountController.text) ?? 0.0;
+    double total = quantity * amount;
+    totals[index] = total;
+
+    setState(() {
+      rows[index] = DataRow(cells: [
+        DataCell(Text((index + 1).toString())),
+        DataCell(TextField(
+          controller: quantityController,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(labelText: 'Quantity'),
+        )),
+        DataCell(TextField(
+          controller: amountController,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(labelText: 'Amount'),
+        )),
+        DataCell(Text(total.toStringAsFixed(2))),
+      ]);
+    });
+
+    _updateGrandTotal();
+  }
+
+  void _updateGrandTotal() {
+    double grandTotal = totals.fold(0, (acc, total) => acc + total);
+    print('Grand Total: $grandTotal');
+  }
+}
